@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ADIN1110 Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        canvas { max-width: 100%; height: 400px; }
+        body { font-family: sans-serif; padding: 2em; }
+    </style>
+</head>
+<body>
+    <h1>ADIN1110 Monitor</h1>
+    <canvas id="snrChart"></canvas>
+    <canvas id="pktChart"></canvas>
+    <script>
+    async function fetchData() {
+        const res = await fetch("/api/data");
+        return await res.json();
+    }
+
+    function drawCharts(data) {
+        const labels = data.map(d => d.time);
+        const snrData = data.map(d => d.snr);
+        const txData = data.map(d => d.tx);
+        const rxData = data.map(d => d.rx);
+        const dropData = data.map(d => d.drop);
+
+        new Chart(document.getElementById("snrChart"), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{ label: "SNR (dB)", data: snrData, borderColor: "blue", fill: false }]
+            }
+        });
+
+        new Chart(document.getElementById("pktChart"), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: "TX Packets", data: txData, borderColor: "green", fill: false },
+                    { label: "RX Packets", data: rxData, borderColor: "orange", fill: false },
+                    { label: "Dropped", data: dropData, borderColor: "red", fill: false }
+                ]
+            }
+        });
+    }
+
+    fetchData().then(drawCharts);
+    </script>
+</body>
+</html>
