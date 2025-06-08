@@ -1,32 +1,24 @@
 from flask import Flask, render_template, jsonify
-import csv
+import pandas as pd
+import os
 
 app = Flask(__name__)
+LOG_FILE = "logs/adin_log_latest.csv"
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/api/data")
-def data():
-    rows = []
+@app.route('/api/data')
+def api_data():
     try:
-        with open("log.csv", "r") as f:
-            reader = csv.reader(f)
-            for row in reader:
-                rows.append({
-                    "time": row[0],
-                    "link": row[1],
-                    "mode": row[2],
-                    "snr": float(row[3]),
-                    "distance": float(row[4]),
-                    "tx": int(row[5]),
-                    "rx": int(row[6]),
-                    "drop": int(row[7])
-                })
-    except:
-        pass
-    return jsonify(rows[-100:])
+        if not os.path.exists(LOG_FILE):
+            return jsonify({"error": "ログファイルが見つかりません"}), 404
+        df = pd.read_csv(LOG_FILE)
+        return jsonify(df.tail(360).to_dict(orient='records'))
+    except Exception as e:
+        print(f"APIエラー: {e}")
+        return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080, debug=False)
